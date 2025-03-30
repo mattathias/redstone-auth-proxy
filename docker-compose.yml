@@ -1,0 +1,21 @@
+services:
+  reverse-proxy:
+    build: .
+    container_name: redstone-auth-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    environment:
+      - TAILSCALE_API_KEY=tskey-auth-kofNucHhoV11CNTRL-Lssvm6QwWtUkYmM22So5tUCCHPNTS6ZjC
+    restart: unless-stopped
+    networks:
+      - redstone-network  # Optional: if you need to connect to other services or networks
+    entrypoint: ["/entrypoint.sh"]  # Ensure this matches the entrypoint in your Dockerfile
+    privileged: true
+    cap_add:
+      - NET_ADMIN       # Needed for networking operations (like iptables)
+      - SYS_MODULE      # Needed for loading kernel modules if required by Tailscale
+networks:
+  redstone-network:

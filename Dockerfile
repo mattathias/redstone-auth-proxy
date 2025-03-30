@@ -1,15 +1,21 @@
-# Base image with Go to build Tailscale from source
-FROM golang:1.20-alpine as tailscale-build
+# Base image with Go 1.22+ to build Tailscale from source
+FROM golang:1.22-alpine as tailscale-build
 
 # Install dependencies to build Tailscale
-RUN apk add --no-cache git make
+RUN apk add --no-cache git make bash
 
 # Clone the Tailscale repository
 RUN git clone https://github.com/tailscale/tailscale.git /tailscale
 
-# Build Tailscale
+# Set working directory
 WORKDIR /tailscale
-RUN make tailscale
+
+# Checkout a stable release (latest version as of now)
+RUN git checkout v1.66.4
+
+# Build Tailscale binaries
+RUN go build -o /tailscale/tailscaled ./cmd/tailscaled && \
+    go build -o /tailscale/tailscale ./cmd/tailscale
 
 # Final image
 FROM caddy:2.6.4-alpine

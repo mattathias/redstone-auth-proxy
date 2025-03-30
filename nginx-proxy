@@ -1,0 +1,39 @@
+server {
+    listen 80;
+    server_name megatron.tail31aa2b.ts.net;
+
+    # Authentication proxy to Tailscale
+    location /auth {
+        internal;
+        proxy_pass http://unix:/run/tailscale.nginx-auth.sock;
+        proxy_pass_request_body off;
+
+        # Pass headers related to Tailscale authentication
+        proxy_set_header Host $http_host;
+        proxy_set_header Remote-Addr $remote_addr;
+        proxy_set_header Remote-Port $remote_port;
+        proxy_set_header Original-URI $request_uri;
+    }
+
+    # Main location for your WebSocket (with reverse proxy)
+    location /rs/ {
+        # Use the authentication check
+        auth_request /auth;
+
+        # Set headers for user information from Tailscale
+        auth_request_set $auth_user $upstream_http_tailscale_user_name;  # Correct header for user name
+        auth_request_set $auth_login $upstream_http_tailscale_user_login;  # Correct header for login
+
+        # Forward Tailscale user info to the backend
+        proxy_set_header tailscale-user-name "$auth_user";
+        proxy_set_header tailscale-user-login "$auth_login";
+
+        # Reverse proxy to your FastAPI backend
+        proxy_pass http://100.100.93.95:5001/rs/chat;
+    }
+
+    # Redirect HTTP to HTTPS if you're using SSL (optional)
+    # listen 443 ssl;
+    # ssl_certificate /path/to/certificate.crt;
+    # ssl_certificate_key /path/to/private.key;
+}

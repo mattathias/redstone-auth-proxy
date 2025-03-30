@@ -2,9 +2,13 @@
 
 megatron.tail31aa2b.ts.net {
     # Handle WebSocket traffic by forwarding to FastAPI backend
-    reverse_proxy /ws 100.100.93.95:5001 {
+    reverse_proxy /rs/* 100.100.93.95:5001 {
         # Forward the Tailscale authentication headers (tailscale-user-name, tailscale-user-login)
         header_up tailscale-user-login {>tailscale-user-login}
         header_up tailscale-user-name {>tailscale-user-name}
+        header_up Upgrade {>Upgrade}
+        header_up Connection {>Connection}
     }
+
+    reverse_proxy 100.100.93.95:3000
 }
